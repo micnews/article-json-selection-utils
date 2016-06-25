@@ -29,7 +29,6 @@
     "tapava": "^2.2.0"
   },
   "dependencies": {
-    "immutable-array-methods": "^1.2.0",
     "immutable-object-methods": "^1.1.2"
   }
 }
