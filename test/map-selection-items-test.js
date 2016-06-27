@@ -1,29 +1,29 @@
 import test from 'tapava';
-import {modifySelectionItems as _modifySelectionItems} from '../lib';
+import {mapSelectionItems as _mapSelectionItems} from '../lib';
 
-const modifySelectionItems = (articleJson, fn) => _modifySelectionItems(Object.freeze(articleJson), fn);
+const mapSelectionItems = (articleJson, fn) => _mapSelectionItems(Object.freeze(articleJson), fn);
 const shouldNotBeCalled = () => {
   throw new Error('this method should not be called');
 };
 
-test('modifySelectionItems() empty array', t => {
-  const actual = modifySelectionItems([], shouldNotBeCalled);
+test('mapSelectionItems() empty array', t => {
+  const actual = mapSelectionItems([], shouldNotBeCalled);
   const expected = [];
   t.deepEqual(actual, expected);
 });
 
-test('modifySelectionItems() no selection', t => {
+test('mapSelectionItems() no selection', t => {
   const articleJson = [{
     type: 'paragraph', children: [{
       content: 'hello, world!'
     }]
   }];
-  const actual = modifySelectionItems(articleJson, shouldNotBeCalled);
+  const actual = mapSelectionItems(articleJson, shouldNotBeCalled);
   const expected = articleJson;
   t.is(actual, expected);
 });
 
-test('modifySelectionItems() simple selection', t => {
+test('mapSelectionItems() simple selection', t => {
   const articleJson = [{
     type: 'paragraph',
     children: [{content: 'beep boop'}]
@@ -33,12 +33,14 @@ test('modifySelectionItems() simple selection', t => {
       {mark: true, markClass: 'selection-start'},
       {content: 'hello, world!'},
       {mark: true, markClass: 'selection-end'}
-    ]
+    ],
+    'extraAttribute': true
   }, {
     type: 'paragraph',
     children: [{content: 'foo bar'}]
   }];
-  const actual = modifySelectionItems(articleJson, item => ({type: 'header3'}));
+  const actual = mapSelectionItems(
+    articleJson, ({children}) => ({type: 'header3', children}));
   const expected = [
     articleJson[0], {
       type: 'header3',
@@ -52,41 +54,44 @@ test('modifySelectionItems() simple selection', t => {
   t.is(actual[2], expected[2]);
 });
 
-test('modifySelectionItems() embed', t => {
+test('mapSelectionItems() embed', t => {
   const articleJson = [{
     type: 'embed',
     embedType: 'image'
   }];
-  const actual = modifySelectionItems(articleJson, shouldNotBeCalled);
+  const actual = mapSelectionItems(articleJson, shouldNotBeCalled);
   const expected = articleJson;
   t.is(actual, expected);
 });
 
-test('modifySelectionItems() before & after embed', t => {
+test('mapSelectionItems() before & after embed', t => {
   const articleJson = [
     {
       type: 'paragraph',
       children: [
         {mark: true, markClass: 'selection-start'},
         {content: 'hello,'}
-      ]
+      ],
+      extraAttribute: true
     }, {
       type: 'embed',
-      embedType: 'image'
+      embedType: 'image',
+      extraAttribute: true
     }, {
       type: 'header3',
       children: [
         {content: 'world!'},
         {mark: true, markClass: 'selection-end'}
-      ]
+      ],
+      extraAttribute: true
     }
   ];
-  const actual = modifySelectionItems(articleJson, item => {
+  const actual = mapSelectionItems(articleJson, item => {
     if (item.type === 'embed') {
-      return {embedType: 'image-foo'};
+      return {type: 'embed', embedType: 'image-foo'};
     }
     if (item.type === 'paragraph' || item.type === 'header3') {
-      return {type: 'header3'};
+      return {type: 'header3', children: item.children};
     }
     shouldNotBeCalled();
   });
@@ -97,8 +102,12 @@ test('modifySelectionItems() before & after embed', t => {
     }, {
       type: 'embed',
       embedType: 'image-foo'
-    }, articleJson[2]
+    }, {
+      type: 'header3',
+      children: articleJson[2].children
+    }
   ];
   t.deepEqual(actual, expected);
-  t.is(actual[2], expected[2]);
+  t.is(actual[0].children, expected[0].children);
+  t.is(actual[2].children, expected[2].children);
 });
