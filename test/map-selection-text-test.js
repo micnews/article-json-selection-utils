@@ -95,3 +95,49 @@ test('mapSelectionText() selection over multiple text elements', t => {
   }];
   t.deepEqual(actual, expected);
 });
+
+test('mapSelectionText() nested in blockquote', t => {
+  const articleJson = [
+    {
+      type: 'paragraph',
+      children: [{content: 'beep boop'}]
+    }, {
+      type: 'blockquote',
+      children: [{
+        type: 'paragraph',
+        children: [
+          {mark: true, markClass: 'selection-start'},
+          {content: 'hello, '},
+          {mark: true, markClass: 'selection-end'},
+          {content: 'world!'}
+        ]}
+      ]
+    }, {
+      type: 'paragraph',
+      children: [{content: 'foo bar'}]
+    }
+  ];
+
+  const actual = mapSelectionText(articleJson, ({content}) => ({italic: true, content}));
+  const expected = [
+    {
+      type: 'paragraph',
+      children: [{content: 'beep boop'}]
+    }, {
+      type: 'blockquote',
+      children: [{
+        type: 'paragraph',
+        children: [
+          {mark: true, markClass: 'selection-start'},
+          {content: 'hello, ', italic: true},
+          {mark: true, markClass: 'selection-end'},
+          {content: 'world!'}
+        ]}
+      ]
+    }, {
+      type: 'paragraph',
+      children: [{content: 'foo bar'}]
+    }
+  ];
+  t.deepEqual(actual, expected);
+});
