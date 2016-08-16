@@ -39,3 +39,29 @@ test('getSelectionText() embed', t => {
   const expected = [];
   t.deepEqual(actual, expected);
 });
+
+test('getSelectionText() nested in blockquote', t => {
+  const articleJson = [
+    {
+      type: 'paragraph',
+      children: [{content: 'beep boop'}]
+    }, {
+      type: 'blockquote',
+      children: [{
+        type: 'paragraph',
+        children: [
+          {mark: true, markClass: 'selection-start'},
+          {content: 'hello, world!'},
+          {mark: true, markClass: 'selection-end'}
+        ]}
+      ]
+    }, {
+      type: 'paragraph',
+      children: [{content: 'foo bar'}]
+    }
+  ];
+
+  const actual = getSelectionText(articleJson);
+  const expected = [{content: 'hello, world!'}];
+  t.deepEqual(actual, expected);
+});

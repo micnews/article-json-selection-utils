@@ -70,3 +70,37 @@ test('getSelectionItems() before & after embed', t => {
   const expected = articleJson;
   t.deepEqual(actual, expected);
 });
+
+test('getSelectionItems() in blockquote', t => {
+  const articleJson = [
+    {
+      type: 'paragraph',
+      children: [{content: 'beep boop'}]
+    }, {
+      type: 'blockquote',
+      children: [{
+        type: 'paragraph',
+        children: [
+          {mark: true, markClass: 'selection-start'},
+          {content: 'hello, world!'},
+          {mark: true, markClass: 'selection-end'}
+        ]}
+      ]
+    }, {
+      type: 'paragraph',
+      children: [{content: 'foo bar'}]
+    }, {
+      type: 'blockquote',
+      children: [{
+        type: 'paragraph',
+        children: [
+          {content: 'foo'}
+        ]}
+      ]
+    }
+  ];
+
+  const actual = getSelectionItems(articleJson);
+  const expected = [articleJson[1]];
+  t.deepEqual(actual, expected);
+});
