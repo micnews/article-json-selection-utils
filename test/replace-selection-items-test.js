@@ -21,7 +21,7 @@ test('replaceSelectionItems() no selection', t => {
   t.deepEqual(actual, articleJson);
 });
 
-test('replaceSelectionItems() simple selection', t => {
+test('replaceSelectionItems() wrap selection', t => {
   const articleJson = [{
     type: 'paragraph',
     children: [{content: 'beep boop'}]
@@ -54,10 +54,71 @@ test('replaceSelectionItems() simple selection', t => {
     children: [{content: 'foo bar'}]
   }];
   const actual = replaceSelectionItems(articleJson, (items) => {
-    return {
+    return [{
       type: 'blockquote',
       children: items
-    };
+    }];
+  });
+
+  t.deepEqual(actual, expected);
+});
+
+test('replaceSelectionItems() unwrap selection', t => {
+  const articleJson = [{
+    type: 'paragraph',
+    children: [{content: 'beep boop'}, {mark: true, markClass: 'selection-start'}]
+  }, {
+    type: 'blockquote',
+    children: [{
+      type: 'paragraph',
+      children: [
+
+        {content: 'hello, world!'},
+        {mark: true, markClass: 'selection-end'}
+      ]}
+    ]
+  }, {
+    type: 'paragraph',
+    children: [{content: 'foo bar'}]
+  }, {
+    type: 'blockquote',
+    children: [{
+      type: 'paragraph',
+      children: [
+        {content: 'foo'}
+      ]}
+    ]
+  }];
+  const expected = [{
+    type: 'paragraph',
+    children: [{content: 'beep boop'}, {mark: true, markClass: 'selection-start'}]
+  }, {
+    type: 'paragraph',
+    children: [
+      {content: 'hello, world!'},
+      {mark: true, markClass: 'selection-end'}
+    ]
+  }, {
+    type: 'paragraph',
+    children: [{content: 'foo bar'}]
+  }, {
+    type: 'blockquote',
+    children: [{
+      type: 'paragraph',
+      children: [
+        {content: 'foo'}
+      ]}
+    ]
+  }];
+  const actual = replaceSelectionItems(articleJson, (items) => {
+    return items.reduce((a, b) => {
+      if (b.type === 'blockquote') {
+        return a.concat(b.children);
+      }
+
+      a.push(b);
+      return a;
+    }, []);
   });
 
   t.deepEqual(actual, expected);
