@@ -1,7 +1,8 @@
 import test from 'tapava';
 import {mapSelectionText as _mapSelectionText} from '../lib';
+import {mergeDeep} from 'immutable-object-methods';
 
-const mapSelectionText = (articleJson, fn) => _mapSelectionText(Object.freeze(articleJson), fn);
+const mapSelectionText = (articleJson, options, fn) => _mapSelectionText(Object.freeze(articleJson), options, fn);
 const shouldNotBeCalled = () => {
   throw new Error('this method should not be called');
 };
@@ -16,7 +17,7 @@ test('mapSelectionText() empty array', t => {
 test('mapSelectionText() no selection', t => {
   const articleJson = [{
     type: 'paragraph', children: [{
-      content: 'hello, world!'
+      type: 'text', content: 'hello, world!'
     }]
   }];
   const actual = mapSelectionText(articleJson, shouldNotBeCalled);
@@ -28,18 +29,18 @@ test('mapSelectionText() simple selection', t => {
   const articleJson = [{
     type: 'paragraph',
     children: [
-      {mark: true, markClass: 'selection-start'},
-      {content: 'hello, world!'},
-      {mark: true, markClass: 'selection-end'}
+      {type: 'text', mark: true, markClass: 'selection-start'},
+      {type: 'text', content: 'hello, world!'},
+      {type: 'text', mark: true, markClass: 'selection-end'}
     ]
   }];
-  const actual = mapSelectionText(articleJson, ({content}) => ({italic: true, content}));
+  const actual = mapSelectionText(articleJson, (item) => (mergeDeep(item, {italic: true})));
   const expected = [{
     type: 'paragraph',
     children: [
-      {mark: true, markClass: 'selection-start'},
-      {content: 'hello, world!', italic: true},
-      {mark: true, markClass: 'selection-end'}
+      {type: 'text', mark: true, markClass: 'selection-start'},
+      {type: 'text', content: 'hello, world!', italic: true},
+      {type: 'text', mark: true, markClass: 'selection-end'}
     ]
   }];
   t.deepEqual(actual, expected);
@@ -59,9 +60,9 @@ test('mapSelectionText() selection over multiple text elements', t => {
   const articleJson = [{
     type: 'paragraph',
     children: [
-      {content: 'before'},
-      {mark: true, markClass: 'selection-start'},
-      {content: 'hello'}
+      {type: 'text', content: 'before'},
+      {type: 'text', mark: true, markClass: 'selection-start'},
+      {type: 'text', content: 'hello'}
     ]
   }, {
     type: 'embed',
@@ -69,18 +70,18 @@ test('mapSelectionText() selection over multiple text elements', t => {
   }, {
     type: 'header3',
     children: [
-      {content: 'world!'},
-      {mark: true, markClass: 'selection-end'},
-      {content: 'after'}
+      {type: 'text', content: 'world!'},
+      {type: 'text', mark: true, markClass: 'selection-end'},
+      {type: 'text', content: 'after'}
     ]
   }];
-  const actual = mapSelectionText(articleJson, ({content}) => ({italic: true, content}));
+  const actual = mapSelectionText(articleJson, (item) => (mergeDeep(item, {italic: true})));
   const expected = [{
     type: 'paragraph',
     children: [
-      {content: 'before'},
-      {mark: true, markClass: 'selection-start'},
-      {content: 'hello', italic: true}
+      {type: 'text', content: 'before'},
+      {type: 'text', mark: true, markClass: 'selection-start'},
+      {type: 'text', content: 'hello', italic: true}
     ]
   }, {
     type: 'embed',
@@ -88,9 +89,9 @@ test('mapSelectionText() selection over multiple text elements', t => {
   }, {
     type: 'header3',
     children: [
-      {content: 'world!', italic: true},
-      {mark: true, markClass: 'selection-end'},
-      {content: 'after'}
+      {type: 'text', content: 'world!', italic: true},
+      {type: 'text', mark: true, markClass: 'selection-end'},
+      {type: 'text', content: 'after'}
     ]
   }];
   t.deepEqual(actual, expected);
@@ -100,44 +101,65 @@ test('mapSelectionText() nested in blockquote', t => {
   const articleJson = [
     {
       type: 'paragraph',
-      children: [{content: 'beep boop'}]
+      children: [{type: 'text', content: 'beep boop'}]
     }, {
       type: 'blockquote',
       children: [{
         type: 'paragraph',
         children: [
-          {mark: true, markClass: 'selection-start'},
-          {content: 'hello, '},
-          {mark: true, markClass: 'selection-end'},
-          {content: 'world!'}
+          {type: 'text', mark: true, markClass: 'selection-start'},
+          {type: 'text', content: 'hello, '},
+          {type: 'text', mark: true, markClass: 'selection-end'},
+          {type: 'text', content: 'world!'}
         ]}
       ]
     }, {
       type: 'paragraph',
-      children: [{content: 'foo bar'}]
+      children: [{type: 'text', content: 'foo bar'}]
     }
   ];
 
-  const actual = mapSelectionText(articleJson, ({content}) => ({italic: true, content}));
+  const actual = mapSelectionText(articleJson, (item) => (mergeDeep(item, {italic: true})));
   const expected = [
     {
       type: 'paragraph',
-      children: [{content: 'beep boop'}]
+      children: [{type: 'text', content: 'beep boop'}]
     }, {
       type: 'blockquote',
       children: [{
         type: 'paragraph',
         children: [
-          {mark: true, markClass: 'selection-start'},
-          {content: 'hello, ', italic: true},
-          {mark: true, markClass: 'selection-end'},
-          {content: 'world!'}
+          {type: 'text', mark: true, markClass: 'selection-start'},
+          {type: 'text', content: 'hello, ', italic: true},
+          {type: 'text', mark: true, markClass: 'selection-end'},
+          {type: 'text', content: 'world!'}
         ]}
       ]
     }, {
       type: 'paragraph',
-      children: [{content: 'foo bar'}]
+      children: [{type: 'text', content: 'foo bar'}]
     }
   ];
+  t.deepEqual(actual, expected);
+});
+
+test('mapSelectionText() includeBoundary=true', t => {
+  const articleJson = [{
+    type: 'paragraph',
+    children: [
+      {type: 'text', mark: true, markClass: 'selection-start'},
+      {type: 'text', content: 'hello, world!'},
+      {type: 'text', mark: true, markClass: 'selection-end'}
+    ]
+  }];
+  const actual = mapSelectionText(articleJson, {includeBoundary: true}, (item) => (mergeDeep(item, {italic: true})));
+  const expected = [{
+    type: 'paragraph',
+    children: [
+      {type: 'text', mark: true, markClass: 'selection-start', italic: true},
+      {type: 'text', content: 'hello, world!', italic: true},
+      {type: 'text', mark: true, markClass: 'selection-end', italic: true}
+    ]
+  }];
   t.deepEqual(actual, expected);
 });

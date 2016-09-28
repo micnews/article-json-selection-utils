@@ -10,7 +10,7 @@ test('getSelectionText() empty array', t => {
 test('getSelectionText() no selection', t => {
   const actual = getSelectionText([{
     type: 'paragraph', children: [{
-      content: 'hello, world!'
+      type: 'text', content: 'hello, world!'
     }]
   }]);
   const expected = [];
@@ -21,13 +21,13 @@ test('getSelectionText() simple selection', t => {
   const articleJson = [{
     type: 'paragraph',
     children: [
-      {mark: true, markClass: 'selection-start'},
-      {content: 'hello, world!'},
-      {mark: true, markClass: 'selection-end'}
+      {type: 'text', mark: true, markClass: 'selection-start'},
+      {type: 'text', content: 'hello, world!'},
+      {type: 'text', mark: true, markClass: 'selection-end'}
     ]
   }];
   const actual = getSelectionText(articleJson);
-  const expected = [{content: 'hello, world!'}];
+  const expected = [{type: 'text', content: 'hello, world!'}];
   t.deepEqual(actual, expected);
 });
 
@@ -44,24 +44,42 @@ test('getSelectionText() nested in blockquote', t => {
   const articleJson = [
     {
       type: 'paragraph',
-      children: [{content: 'beep boop'}]
+      children: [{type: 'text', content: 'beep boop'}]
     }, {
       type: 'blockquote',
       children: [{
         type: 'paragraph',
         children: [
-          {mark: true, markClass: 'selection-start'},
-          {content: 'hello, world!'},
-          {mark: true, markClass: 'selection-end'}
+          {type: 'text', mark: true, markClass: 'selection-start'},
+          {type: 'text', content: 'hello, world!'},
+          {type: 'text', mark: true, markClass: 'selection-end'}
         ]}
       ]
     }, {
       type: 'paragraph',
-      children: [{content: 'foo bar'}]
+      children: [{type: 'text', content: 'foo bar'}]
     }
   ];
 
   const actual = getSelectionText(articleJson);
-  const expected = [{content: 'hello, world!'}];
+  const expected = [{type: 'text', content: 'hello, world!'}];
+  t.deepEqual(actual, expected);
+});
+
+test('getSelectionText() includeBoundary=true', t => {
+  const articleJson = [{
+    type: 'paragraph',
+    children: [
+      {type: 'text', mark: true, markClass: 'selection-start'},
+      {type: 'text', content: 'hello, world!'},
+      {type: 'text', mark: true, markClass: 'selection-end'}
+    ]
+  }];
+  const actual = getSelectionText(articleJson, {includeBoundary: true});
+  const expected = [
+    {type: 'text', mark: true, markClass: 'selection-start'},
+    {type: 'text', content: 'hello, world!'},
+    {type: 'text', mark: true, markClass: 'selection-end'}
+  ];
   t.deepEqual(actual, expected);
 });
