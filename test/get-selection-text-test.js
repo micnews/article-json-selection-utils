@@ -65,3 +65,21 @@ test('getSelectionText() nested in blockquote', t => {
   const expected = [{type: 'text', content: 'hello, world!'}];
   t.deepEqual(actual, expected);
 });
+
+test('getSelectionText() includeBoundary=true', t => {
+  const articleJson = [{
+    type: 'paragraph',
+    children: [
+      {type: 'text', mark: true, markClass: 'selection-start'},
+      {type: 'text', content: 'hello, world!'},
+      {type: 'text', mark: true, markClass: 'selection-end'}
+    ]
+  }];
+  const actual = getSelectionText(articleJson, {includeBoundary: true});
+  const expected = [
+    {type: 'text', mark: true, markClass: 'selection-start'},
+    {type: 'text', content: 'hello, world!'},
+    {type: 'text', mark: true, markClass: 'selection-end'}
+  ];
+  t.deepEqual(actual, expected);
+});
