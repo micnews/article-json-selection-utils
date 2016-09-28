@@ -1,6 +1,6 @@
 {
   "name": "article-json-selection-utils",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "Get, return & modify article-json selections",
   "main": "dist/index.js",
   "scripts": {
